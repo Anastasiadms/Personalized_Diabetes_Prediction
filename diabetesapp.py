@@ -100,7 +100,7 @@ checklist = st.multiselect(
     "Do you experience any of the following symptoms?",
     ["Frequent urination", "Excessive thirst", "Fatigue", "Blurred vision"]
 )[ordered_cols]
-    data_scaled = scaler.transform(input_df)
+        data_scaled = scaler.transform(input_df)
 
     prediction = model.predict(data_scaled)[0]
     probability = model.predict_proba(data_scaled)[0][prediction]
