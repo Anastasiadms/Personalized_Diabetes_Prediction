@@ -65,38 +65,7 @@ def generate_pdf(data, prediction, bmi, risk_score):
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(200, 10, txt="Prediction Result", ln=1)
     pdf.set_font("Arial", '', 12)
-    if prediction == 1:
-        st.warning("⚠️ This result suggests a higher risk of diabetes. Please consult a healthcare provider for further testing.")
-
-        # Recommended Diet
-        st.subheader("Recommended Diet Tips for Managing Diabetes")
-        st.markdown("""
-        - **Choose complex carbs** like whole grains, lentils, and vegetables instead of refined carbs.
-        - **Eat more fiber**: Vegetables, beans, and oats help regulate blood sugar.
-        - **Limit sugary drinks and processed foods**.
-        - **Control portion sizes** and space meals evenly.
-        - **Healthy fats**: Choose olive oil, nuts, and avocados in moderation.
-        - **Stay hydrated** and reduce sodium intake.
-
-        _Always consult with a registered dietitian for personalized guidance._
-        """)
-
-        # Recommended Exercise
-        st.subheader("Physical Activity Tips")
-        st.markdown("""
-        - Aim for at least **150 minutes of moderate activity** per week (e.g., brisk walking, swimming).
-        - Incorporate **strength training** 2–3 times per week.
-        - Try to **avoid sitting for long periods** — move every 30–60 minutes.
-        - Stretch regularly and consider activities like **yoga or cycling** for endurance.
-        """)
-
-        # External Resources
-        st.subheader("Helpful Resources")
-        st.markdown("""
-        - [American Diabetes Association](https://www.diabetes.org/healthy-living)
-        - [CDC Diabetes Prevention Program](https://www.cdc.gov/diabetes/prevention/index.html)
-        - [WHO Diabetes Fact Sheet](https://www.who.int/news-room/fact-sheets/detail/diabetes)
-        """)
+    
     else:
         st.success("✅ This result suggests a lower risk of diabetes.")
 
@@ -118,3 +87,4 @@ def generate_pdf(data, prediction, bmi, risk_score):
 
     pdf_file = generate_pdf(user_info, prediction, bmi, risk_score)
     st.markdown(download_pdf(pdf_file), unsafe_allow_html=True)
+
