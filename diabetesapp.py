@@ -146,11 +146,21 @@ if st.button("🔍 Predict"):
 
     # SHAP explanation
     st.subheader("🔍 Visual Explanation (SHAP)")
-    explainer = shap.Explainer(model, input_df)
-    shap_values = explainer(input_df)
-    # shap.initjs()  # Removed because IPython not required for Streamlit SHAP rendering
-    shap.plots.waterfall(shap_values[0], max_display=6, show=False)
-    st.pyplot(bbox_inches='tight')
+
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(input_df)
+
+    try:
+        st.set_option('deprecation.showPyplotGlobalUse', False)
+        shap.plots._waterfall.waterfall_legacy(
+            shap.Explanation(values=shap_values[1][0],
+                             base_values=explainer.expected_value[1],
+                             data=input_df.iloc[0]),
+            max_display=6
+        )
+        st.pyplot(bbox_inches='tight')
+    except Exception as e:
+        st.warning(f"SHAP plot could not be rendered: {e}")
 
     user_info = {
         "Name": user_name,
@@ -169,4 +179,3 @@ if st.button("🔍 Predict"):
 
     pdf_file = generate_pdf(user_info, prediction, bmi, risk_score)
     st.markdown(download_pdf(pdf_file), unsafe_allow_html=True)
-
