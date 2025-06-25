@@ -1,5 +1,6 @@
 import streamlit as st
 import numpy as np
+import pandas as pd
 import joblib
 from fpdf import FPDF
 import base64
@@ -47,29 +48,11 @@ def download_pdf(file_path):
         href = f'<a href="data:application/pdf;base64,{base64_pdf}" download="diabetes_prediction_report.pdf">📥 Download Prediction Report</a>'
         return href
 
-# Custom style
 st.set_page_config(page_title="Diabetes Prediction App", page_icon="🩺", layout="centered")
-st.markdown("""
-    <style>
-    .main { background-color: #f0f2f6; }
-    .stButton > button { background-color: #008080; color: white; font-weight: bold; }
-    .stDownloadButton { color: #008080; }
-    </style>
-""", unsafe_allow_html=True)
-
 st.title("🩺 Personalized Diabetes Prediction")
-st.subheader("Input your health information below:")
 
-# User name input
+# User input
 user_name = st.text_input("👤 Enter your name:", value="")
-
-# Sidebar with checklist
-with st.sidebar:
-    st.markdown("### Optional Info")
-    checklist = st.multiselect("Check if you have these symptoms:",
-        ["Frequent urination", "Excessive thirst", "Fatigue", "Blurred vision"])
-
-# User inputs
 age = st.slider("Age", min_value=1, max_value=100, value=30)
 gender = st.selectbox("Gender", ["Male", "Female"])
 pregnancies = st.slider("Pregnancies", min_value=0, max_value=20, value=1)
@@ -80,22 +63,43 @@ height = st.slider("Height (cm)", min_value=100.0, max_value=220.0, value=170.0)
 insulin = st.slider("Insulin", min_value=0.0, max_value=600.0, value=100.0)
 bloodpressure = st.slider("Blood Pressure", min_value=0.0, max_value=200.0, value=80.0)
 
-# Predict button
+# Optional symptoms
+with st.sidebar:
+    st.markdown("### Optional Info")
+    checklist = st.multiselect("Check if you have these symptoms:",
+        ["Frequent urination", "Excessive thirst", "Fatigue", "Blurred vision"])
+
+# Prediction trigger
 if st.button("🔍 Predict"):
     bmi = calculate_bmi(weight, height)
     risk_score = calculate_risk_score(glucose, bmi, age, pregnancies)
 
-    input_data = np.array([[pregnancies, glucose, bloodpressure, skinthickness, bmi, age]])
-    input_scaled = scaler.transform(input_data)
+    # Feature engineering to match training
+    data = pd.DataFrame({
+        'Pregnancies': [pregnancies],
+        'Glucose': [glucose],
+        'BloodPressure': [bloodpressure],
+        'SkinThickness': [skinthickness],
+        'BMI': [bmi],
+        'Age': [age],
+        'Glucose_BMI': [glucose * bmi],
+        'Total_Risk_Score': [risk_score],
+        'is_obese': [int(bmi >= 30)],
+        'is_high_glucose': [int(glucose >= 140)],
+        'is_high_bp': [int(bloodpressure >= 90)],
+        'is_high_insulin': [int(insulin >= 25)],
+        'is_high_dpf': [0]  # placeholder if DPF not collected
+    })
 
-    prediction = model.predict(input_scaled)[0]
-    probability = model.predict_proba(input_scaled)[0][prediction]
+    data_scaled = scaler.transform(data)
+    prediction = model.predict(data_scaled)[0]
+    probability = model.predict_proba(data_scaled)[0][prediction]
 
-    st.markdown("## 🧾 Prediction Result")
+    st.subheader("🧾 Prediction Result")
     st.write(f"**Patient Name:** {user_name if user_name else 'N/A'}")
     st.write("**Prediction:**", "🟥 Diabetic" if prediction == 1 else "🟩 Non-Diabetic")
-    st.write("**BMI:**", f"{bmi}")
-    st.write("**Total Risk Score:**", f"{risk_score}")
+    st.write("**BMI:**", bmi)
+    st.write("**Total Risk Score:**", risk_score)
     st.write("**Confidence:**", f"{round(probability * 100, 2)}%")
 
     if prediction == 1:
@@ -105,14 +109,13 @@ if st.button("🔍 Predict"):
 
     # SHAP explanation
     st.subheader("🔍 Visual Explanation (SHAP)")
-    explainer = shap.Explainer(model, X_train_resampled)
-    shap_values = explainer(input_scaled)
+    explainer = shap.Explainer(model, data_scaled)
+    shap_values = explainer(data_scaled)
     shap.initjs()
-    st.set_option('deprecation.showPyplotGlobalUse', False)
     shap.plots.waterfall(shap_values[0], max_display=6, show=False)
     st.pyplot(bbox_inches='tight')
 
-    # Generate PDF
+    # Report info
     user_info = {
         "Name": user_name,
         "Age": age,
