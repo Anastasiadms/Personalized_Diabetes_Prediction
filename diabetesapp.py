@@ -80,7 +80,7 @@ def download_pdf(file_path):
 
 # Streamlit UI
 st.set_page_config(page_title="Diabetes Prediction App", page_icon="🩺", layout="centered")
-st.title("Diabetes Prediction")
+st.title("🩺 Personalized Diabetes Prediction")
 
 user_name = st.text_input("👤 Enter your name:", value="")
 age = st.slider("Age", 1, 100, 30)
@@ -95,12 +95,65 @@ dpf = st.number_input("Diabetes Pedigree Function (DPF)", 0.0, 3.0, value=0.5, h
 bloodpressure = st.slider("Blood Pressure", 0.0, 200.0, 80.0)
 
 st.markdown("### 🤒 Symptoms Checklist (Optional)")
-st.markdown("### 🤒 Symptoms Checklist (Optional)")
 checklist = st.multiselect(
     "Do you experience any of the following symptoms?",
     ["Frequent urination", "Excessive thirst", "Fatigue", "Blurred vision"]
-)[ordered_cols]
-        data_scaled = scaler.transform(input_df)
+)
+
+bmi = calculate_bmi(weight, height)
+risk_score = calculate_risk_score(glucose, bmi, age, pregnancies)
+glucose_bmi = glucose * bmi
+insulin_log = np.log1p(insulin)
+dpf_log = np.log1p(dpf)
+bp_deviation = abs(bloodpressure - 80)
+
+age_groups = {'AgeGroup_31-40': 0, 'AgeGroup_41-50': 0, 'AgeGroup_51-60': 0, 'AgeGroup_60+': 0}
+if 31 <= age <= 40:
+    age_groups['AgeGroup_31-40'] = 1
+elif 41 <= age <= 50:
+    age_groups['AgeGroup_41-50'] = 1
+elif 51 <= age <= 60:
+    age_groups['AgeGroup_51-60'] = 1
+elif age > 60:
+    age_groups['AgeGroup_60+'] = 1
+
+bmi_cats = {'BMICategory_Obese': 0, 'BMICategory_Overweight': 0, 'BMICategory_Underweight': 0}
+if bmi < 18.5:
+    bmi_cats['BMICategory_Underweight'] = 1
+elif 25 <= bmi < 30:
+    bmi_cats['BMICategory_Overweight'] = 1
+elif bmi >= 30:
+    bmi_cats['BMICategory_Obese'] = 1
+
+input_dict = {
+    'Pregnancies': pregnancies,
+    'Glucose': glucose,
+    'BloodPressure': bloodpressure,
+    'SkinThickness': skinthickness,
+    'BMI': bmi,
+    'Age': age,
+    'Insulin_log': insulin_log,
+    'DPF_log': dpf_log,
+    'BP_Deviation': bp_deviation,
+    'Glucose_BMI': glucose_bmi,
+    'Total_Risk_Score': risk_score,
+    'is_obese': int(bmi >= 30),
+    'is_high_glucose': int(glucose >= 140),
+    'is_high_bp': int(bloodpressure >= 90),
+    'is_high_insulin': int(insulin >= 25),
+    'is_high_dpf': int(dpf_log >= np.percentile([np.log1p(dpf)], 80))
+}
+input_dict.update(age_groups)
+input_dict.update(bmi_cats)
+
+ordered_cols = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'BMI', 'Age',
+                'AgeGroup_31-40', 'AgeGroup_41-50', 'AgeGroup_51-60', 'AgeGroup_60+',
+                'BMICategory_Obese', 'BMICategory_Overweight', 'BMICategory_Underweight',
+                'Insulin_log', 'DPF_log', 'BP_Deviation', 'Glucose_BMI', 'Total_Risk_Score',
+                'is_obese', 'is_high_glucose', 'is_high_bp', 'is_high_insulin', 'is_high_dpf']
+
+input_df = pd.DataFrame([input_dict])[ordered_cols]
+data_scaled = scaler.transform(input_df)
 
     prediction = model.predict(data_scaled)[0]
     probability = model.predict_proba(data_scaled)[0][prediction]
@@ -161,3 +214,4 @@ checklist = st.multiselect(
 
     pdf_file = generate_pdf(user_info, prediction, bmi, risk_score)
     st.markdown(download_pdf(pdf_file), unsafe_allow_html=True)
+
