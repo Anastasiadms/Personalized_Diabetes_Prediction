@@ -144,7 +144,6 @@ if st.button("🔍 Predict"):
     else:
         st.success("✅ This result suggests a lower risk of diabetes.")
 
-            st.warning(f"SHAP plot could not be rendered: {e}")
 
     user_info = {
         "Name": user_name,
