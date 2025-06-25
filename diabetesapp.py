@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 import joblib
 from fpdf import FPDF
-from datetime import datetime
 import base64
+from datetime import datetime
 
 # Load model and scaler
 model = joblib.load('best_rf_model.pkl')
@@ -22,6 +22,7 @@ def generate_pdf(data, prediction, bmi, risk_score):
     pdf = FPDF()
     pdf.add_page()
     report_date = datetime.now().strftime('%Y-%m-%d %H:%M')
+    filename = f"diabetes_prediction_{data['Name'].replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
 
     pdf.set_font("Arial", 'B', 16)
     pdf.cell(200, 10, txt="Diabetes Prediction Report", ln=1, align='C')
@@ -29,6 +30,7 @@ def generate_pdf(data, prediction, bmi, risk_score):
     pdf.ln(5)
 
     pdf.set_font("Arial", '', 12)
+    pdf.set_text_color(0, 0, 0)
     pdf.cell(200, 10, txt=f"Name: {data['Name']}", ln=1)
     pdf.cell(200, 10, txt=f"Age: {data['Age']}   Gender: {data['Gender']}", ln=1)
     pdf.cell(200, 10, txt=f"Pregnancies: {data['Pregnancies']}   DPF: {data['DPF']}", ln=1)
@@ -53,38 +55,67 @@ def generate_pdf(data, prediction, bmi, risk_score):
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(200, 10, txt="Prediction Result", ln=1)
     pdf.set_font("Arial", '', 12)
+    pdf.set_text_color(255, 0, 0 if prediction == 1 else 0, 128 if prediction == 0 else 0)
     result_text = "Diabetic" if prediction == 1 else "Non-Diabetic"
     pdf.cell(200, 10, txt=f"Prediction: {result_text}", ln=1)
+    pdf.set_text_color(0, 0, 0)
 
-    filename = f"diabetes_prediction_{data['Name'].replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(200, 10, txt="Symptoms Checked", ln=1)
+    pdf.set_font("Arial", '', 12)
+    pdf.multi_cell(0, 10, txt=data['Symptoms Checked'])
+
     pdf.output(filename)
     return filename
 
 def download_pdf(file_path):
     with open(file_path, "rb") as f:
         base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-    return f'<a href="data:application/pdf;base64,{base64_pdf}" download="{file_path}">📄 Download Your PDF Report</a>'
+        href = f'<a href="data:application/pdf;base64,{base64_pdf}" download="{file_path}">📥 Download Prediction Report</a>'
+        return href
 
-# Streamlit App
-st.set_page_config(page_title="Personalized Diabetes Prediction", layout="centered")
-st.title("🩺 Personalized Diabetes Prediction App")
+# Streamlit UI
+st.set_page_config(page_title="Diabetes Prediction App", page_icon="🩺", layout="centered")
+st.title("🩺 Personalized Diabetes Prediction")
 
-user_name = st.text_input("Enter your name")
-age = st.number_input("Age", min_value=1, max_value=120, value=30)
+user_name = st.text_input("👤 Enter your name:", value="")
+age = st.slider("Age", 1, 100, 30)
 gender = st.selectbox("Gender", ["Male", "Female"])
-pregnancies = st.number_input("Number of Pregnancies", min_value=0, max_value=20, value=1)
-glucose = st.number_input("Glucose Level", min_value=0.0, value=100.0)
-skinthickness = st.number_input("Skin Thickness", min_value=0.0, value=20.0)
-weight = st.number_input("Weight (kg)", min_value=1.0, value=70.0)
-height = st.number_input("Height (cm)", min_value=50.0, value=170.0)
-insulin = st.number_input("Insulin Level", min_value=0.0, value=100.0)
-bloodpressure = st.number_input("Blood Pressure", min_value=0.0, value=80.0)
-dpf = st.number_input("Diabetes Pedigree Function (DPF)", min_value=0.0, max_value=3.0, value=0.5, help="A score indicating the genetic likelihood of diabetes based on family history. Typical values range from 0.1 to 2.5.")
-checklist = st.multiselect("Check any of the following symptoms:", ["Frequent urination", "Excessive thirst", "Blurred vision", "Fatigue", "Slow healing wounds"])
+pregnancies = st.slider("Pregnancies", 0, 20, 1)
+glucose = st.slider("Glucose", 50, 200, 110)
+skinthickness = st.slider("Skin Thickness (mm)", 0, 100, 20)
+weight = st.number_input("Weight (kg)", 30.0, 200.0, step=0.1)
+height = st.number_input("Height (cm)", 100.0, 220.0, step=0.1)
+insulin = st.slider("Insulin", 0.0, 600.0, 100.0)
+dpf = st.number_input("Diabetes Pedigree Function (DPF)", 0.0, 3.0, value=0.5, help="A score indicating the genetic likelihood of diabetes based on family history. Typical values range from 0.1 to 2.5.")
+bloodpressure = st.slider("Blood Pressure", 0.0, 200.0, 80.0)
 
-if st.button("Predict"):
+with st.sidebar:
+    st.markdown("### Optional Info")
+    checklist = st.multiselect("Check if you have these symptoms:", ["Frequent urination", "Excessive thirst", "Fatigue", "Blurred vision"])
+
+if st.button("🔍 Predict"):
     bmi = calculate_bmi(weight, height)
     risk_score = calculate_risk_score(glucose, bmi, age, pregnancies)
+    glucose_bmi = glucose * bmi
+    insulin_log = np.log1p(insulin)
+    dpf_log = np.log1p(dpf)
+    bp_deviation = abs(bloodpressure - 80)
+
+    age_groups = {'AgeGroup_31-40': 0, 'AgeGroup_41-50': 0, 'AgeGroup_51-60': 0, 'AgeGroup_60+': 0}
+    if 31 <= age <= 40: age_groups['AgeGroup_31-40'] = 1
+    elif 41 <= age <= 50: age_groups['AgeGroup_41-50'] = 1
+    elif 51 <= age <= 60: age_groups['AgeGroup_51-60'] = 1
+    elif age > 60: age_groups['AgeGroup_60+'] = 1
+
+    bmi_cats = {'BMICategory_Obese': 0, 'BMICategory_Overweight': 0, 'BMICategory_Underweight': 0}
+    if bmi < 18.5:
+        bmi_cats['BMICategory_Underweight'] = 1
+    elif 25 <= bmi < 30:
+        bmi_cats['BMICategory_Overweight'] = 1
+    elif bmi >= 30:
+        bmi_cats['BMICategory_Obese'] = 1
 
     input_dict = {
         'Pregnancies': pregnancies,
@@ -93,25 +124,43 @@ if st.button("Predict"):
         'SkinThickness': skinthickness,
         'BMI': bmi,
         'Age': age,
-        'DPF_log': np.log1p(dpf),
-        'Insulin_log': np.log1p(insulin),
-        'BP_Deviation': abs(bloodpressure - 80),
-        'Glucose_BMI': glucose * bmi,
+        'Insulin_log': insulin_log,
+        'DPF_log': dpf_log,
+        'BP_Deviation': bp_deviation,
+        'Glucose_BMI': glucose_bmi,
         'Total_Risk_Score': risk_score,
         'is_obese': int(bmi >= 30),
         'is_high_glucose': int(glucose >= 140),
         'is_high_bp': int(bloodpressure >= 90),
-        'is_high_insulin': int(insulin >= 200),
-        'is_high_dpf': int(dpf >= 1.0)
+        'is_high_insulin': int(insulin >= 25),
+        'is_high_dpf': int(dpf_log >= np.percentile([np.log1p(dpf)], 80))
     }
+    input_dict.update(age_groups)
+    input_dict.update(bmi_cats)
 
-    input_df = pd.DataFrame([input_dict])
-    input_scaled = scaler.transform(input_df)
-    prediction = model.predict(input_scaled)[0]
+    ordered_cols = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'BMI', 'Age',
+                    'AgeGroup_31-40', 'AgeGroup_41-50', 'AgeGroup_51-60', 'AgeGroup_60+',
+                    'BMICategory_Obese', 'BMICategory_Overweight', 'BMICategory_Underweight',
+                    'Insulin_log', 'DPF_log', 'BP_Deviation', 'Glucose_BMI', 'Total_Risk_Score',
+                    'is_obese', 'is_high_glucose', 'is_high_bp', 'is_high_insulin', 'is_high_dpf']
+
+    input_df = pd.DataFrame([input_dict])[ordered_cols]
+    data_scaled = scaler.transform(input_df)
+
+    prediction = model.predict(data_scaled)[0]
+    probability = model.predict_proba(data_scaled)[0][prediction]
+
+    st.subheader("🧾 Prediction Result")
+    st.write(f"**Patient Name:** {user_name if user_name else 'N/A'}")
+    st.write("**Prediction:**", "🟥 Diabetic" if prediction == 1 else "🟩 Non-Diabetic")
+    st.write("**BMI:**", bmi, help="Body Mass Index — a measure of body fat based on height and weight.")
+    st.write("**Total Risk Score:**", risk_score, help="A custom score combining glucose, BMI, age, and pregnancies to estimate diabetes risk.")
+    st.write("**Confidence:**", f"{round(probability * 100, 2)}%")
 
     if prediction == 1:
         st.warning("⚠️ This result suggests a higher risk of diabetes. Please consult a healthcare provider for further testing.")
-        st.subheader("Recommended Diet Tips for Managing Diabetes")
+
+        st.subheader("🥗 Recommended Diet Tips for Managing Diabetes")
         st.markdown("""
         - **Choose complex carbs** like whole grains, lentils, and vegetables instead of refined carbs.
         - **Eat more fiber**: Vegetables, beans, and oats help regulate blood sugar.
@@ -122,14 +171,16 @@ if st.button("Predict"):
 
         _Always consult with a registered dietitian for personalized guidance._
         """)
-        st.subheader("Physical Activity Tips")
+
+        st.subheader("🏃‍♂️ Physical Activity Tips")
         st.markdown("""
         - Aim for at least **150 minutes of moderate activity** per week (e.g., brisk walking, swimming).
         - Incorporate **strength training** 2–3 times per week.
         - Try to **avoid sitting for long periods** — move every 30–60 minutes.
         - Stretch regularly and consider activities like **yoga or cycling** for endurance.
         """)
-        st.subheader("Helpful Resources")
+
+        st.subheader("🔗 Helpful Resources")
         st.markdown("""
         - [American Diabetes Association](https://www.diabetes.org/healthy-living)
         - [CDC Diabetes Prevention Program](https://www.cdc.gov/diabetes/prevention/index.html)
