@@ -61,6 +61,7 @@ skinthickness = st.slider("Skin Thickness (mm)", min_value=0, max_value=100, val
 weight = st.slider("Weight (kg)", min_value=30.0, max_value=200.0, value=70.0)
 height = st.slider("Height (cm)", min_value=100.0, max_value=220.0, value=170.0)
 insulin = st.slider("Insulin", min_value=0.0, max_value=600.0, value=100.0)
+dpf = st.number_input("Diabetes Pedigree Function (DPF)", min_value=0.0, max_value=3.0, value=0.5)
 bloodpressure = st.slider("Blood Pressure", min_value=0.0, max_value=200.0, value=80.0)
 
 # Optional symptoms
@@ -73,25 +74,61 @@ with st.sidebar:
 if st.button("🔍 Predict"):
     bmi = calculate_bmi(weight, height)
     risk_score = calculate_risk_score(glucose, bmi, age, pregnancies)
+    glucose_bmi = glucose * bmi
+    insulin_log = np.log1p(insulin)
+    dpf_log = np.log1p(dpf)
+    bp_deviation = abs(bloodpressure - 80)
 
-    # Feature engineering to match training
-    data = pd.DataFrame({
-        'Pregnancies': [pregnancies],
-        'Glucose': [glucose],
-        'BloodPressure': [bloodpressure],
-        'SkinThickness': [skinthickness],
-        'BMI': [bmi],
-        'Age': [age],
-        'Glucose_BMI': [glucose * bmi],
-        'Total_Risk_Score': [risk_score],
-        'is_obese': [int(bmi >= 30)],
-        'is_high_glucose': [int(glucose >= 140)],
-        'is_high_bp': [int(bloodpressure >= 90)],
-        'is_high_insulin': [int(insulin >= 25)],
-        'is_high_dpf': [0]  # placeholder if DPF not collected
-    })
+    # One-hot encodings for AgeGroup and BMICategory
+    age_groups = {'AgeGroup_31-40': 0, 'AgeGroup_41-50': 0, 'AgeGroup_51-60': 0, 'AgeGroup_60+': 0}
+    if 31 <= age <= 40:
+        age_groups['AgeGroup_31-40'] = 1
+    elif 41 <= age <= 50:
+        age_groups['AgeGroup_41-50'] = 1
+    elif 51 <= age <= 60:
+        age_groups['AgeGroup_51-60'] = 1
+    elif age > 60:
+        age_groups['AgeGroup_60+'] = 1
 
-    data_scaled = scaler.transform(data)
+    bmi_cats = {'BMICategory_Obese': 0, 'BMICategory_Overweight': 0, 'BMICategory_Underweight': 0}
+    if bmi < 18.5:
+        bmi_cats['BMICategory_Underweight'] = 1
+    elif 25 <= bmi < 30:
+        bmi_cats['BMICategory_Overweight'] = 1
+    elif bmi >= 30:
+        bmi_cats['BMICategory_Obese'] = 1
+
+    input_dict = {
+        'Pregnancies': pregnancies,
+        'Glucose': glucose,
+        'BloodPressure': bloodpressure,
+        'SkinThickness': skinthickness,
+        'BMI': bmi,
+        'Age': age,
+        'Insulin_log': insulin_log,
+        'DPF_log': dpf_log,
+        'BP_Deviation': bp_deviation,
+        'Glucose_BMI': glucose_bmi,
+        'Total_Risk_Score': risk_score,
+        'is_obese': int(bmi >= 30),
+        'is_high_glucose': int(glucose >= 140),
+        'is_high_bp': int(bloodpressure >= 90),
+        'is_high_insulin': int(insulin >= 25),
+        'is_high_dpf': int(dpf_log >= np.percentile([np.log1p(dpf)], 80))
+    }
+    input_dict.update(age_groups)
+    input_dict.update(bmi_cats)
+
+    # Ensure correct order of columns
+    ordered_cols = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'BMI', 'Age',
+                    'AgeGroup_31-40', 'AgeGroup_41-50', 'AgeGroup_51-60', 'AgeGroup_60+',
+                    'BMICategory_Obese', 'BMICategory_Overweight', 'BMICategory_Underweight',
+                    'Insulin_log', 'DPF_log', 'BP_Deviation', 'Glucose_BMI', 'Total_Risk_Score',
+                    'is_obese', 'is_high_glucose', 'is_high_bp', 'is_high_insulin', 'is_high_dpf']
+
+    input_df = pd.DataFrame([input_dict])[ordered_cols]
+    data_scaled = scaler.transform(input_df)
+
     prediction = model.predict(data_scaled)[0]
     probability = model.predict_proba(data_scaled)[0][prediction]
 
@@ -109,13 +146,12 @@ if st.button("🔍 Predict"):
 
     # SHAP explanation
     st.subheader("🔍 Visual Explanation (SHAP)")
-    explainer = shap.Explainer(model, data_scaled)
-    shap_values = explainer(data_scaled)
+    explainer = shap.Explainer(model, input_df)
+    shap_values = explainer(input_df)
     shap.initjs()
     shap.plots.waterfall(shap_values[0], max_display=6, show=False)
     st.pyplot(bbox_inches='tight')
 
-    # Report info
     user_info = {
         "Name": user_name,
         "Age": age,
@@ -127,6 +163,7 @@ if st.button("🔍 Predict"):
         "Height (cm)": height,
         "Insulin": insulin,
         "Blood Pressure": bloodpressure,
+        "DPF": dpf,
         "Symptoms Checked": ', '.join(checklist) if checklist else "None"
     }
 
