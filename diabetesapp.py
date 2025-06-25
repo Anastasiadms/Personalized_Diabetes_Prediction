@@ -155,6 +155,7 @@ ordered_cols = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'BMI
 input_df = pd.DataFrame([input_dict])[ordered_cols]
 data_scaled = scaler.transform(input_df)
 
+if st.button("🔍 Predict"):
     prediction = model.predict(data_scaled)[0]
     probability = model.predict_proba(data_scaled)[0][prediction]
 
@@ -214,4 +215,3 @@ data_scaled = scaler.transform(input_df)
 
     pdf_file = generate_pdf(user_info, prediction, bmi, risk_score)
     st.markdown(download_pdf(pdf_file), unsafe_allow_html=True)
-
