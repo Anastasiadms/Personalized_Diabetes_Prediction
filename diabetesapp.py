@@ -55,7 +55,10 @@ def generate_pdf(data, prediction, bmi, risk_score):
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(200, 10, txt="Prediction Result", ln=1)
     pdf.set_font("Arial", '', 12)
-    pdf.set_text_color(255, 0, 0 if prediction == 1 else 0, 128 if prediction == 0 else 0)
+    if prediction == 1:
+        pdf.set_text_color(255, 0, 0)
+    else:
+        pdf.set_text_color(0, 128, 0)
     result_text = "Diabetic" if prediction == 1 else "Non-Diabetic"
     pdf.cell(200, 10, txt=f"Prediction: {result_text}", ln=1)
     pdf.set_text_color(0, 0, 0)
