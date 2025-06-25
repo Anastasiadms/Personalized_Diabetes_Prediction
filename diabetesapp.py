@@ -80,7 +80,7 @@ def download_pdf(file_path):
 
 # Streamlit UI
 st.set_page_config(page_title="Diabetes Prediction App", page_icon="🩺", layout="centered")
-st.title("🩺 Personalized Diabetes Prediction")
+st.title("Diabetes Prediction")
 
 user_name = st.text_input("👤 Enter your name:", value="")
 age = st.slider("Age", 1, 100, 30)
@@ -94,7 +94,7 @@ insulin = st.slider("Insulin", 0.0, 600.0, 100.0)
 dpf = st.number_input("Diabetes Pedigree Function (DPF)", 0.0, 3.0, value=0.5, help="A score indicating the genetic likelihood of diabetes based on family history. Typical values range from 0.1 to 2.5.")
 bloodpressure = st.slider("Blood Pressure", 0.0, 200.0, 80.0)
 
-st.markdown("### 🤒 Symptoms Checklist (Optional)")
+st.markdown("### Symptoms Checklist (Optional)")
 checklist = st.multiselect(
     "Do you experience any of the following symptoms?",
     ["Frequent urination", "Excessive thirst", "Fatigue", "Blurred vision"]
