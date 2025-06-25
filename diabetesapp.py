@@ -94,9 +94,11 @@ insulin = st.slider("Insulin", 0.0, 600.0, 100.0)
 dpf = st.number_input("Diabetes Pedigree Function (DPF)", 0.0, 3.0, value=0.5, help="A score indicating the genetic likelihood of diabetes based on family history. Typical values range from 0.1 to 2.5.")
 bloodpressure = st.slider("Blood Pressure", 0.0, 200.0, 80.0)
 
-with st.sidebar:
-    st.markdown("### Optional Info")
-    checklist = st.multiselect("Check if you have these symptoms:", ["Frequent urination", "Excessive thirst", "Fatigue", "Blurred vision"])
+st.markdown("### 🤒 Symptoms Checklist (Optional)")
+checklist = st.multiselect(
+    "Do you experience any of the following symptoms?",
+    ["Frequent urination", "Excessive thirst", "Fatigue", "Blurred vision"]
+)
 
 if st.button("🔍 Predict"):
     bmi = calculate_bmi(weight, height)
@@ -209,3 +211,4 @@ if st.button("🔍 Predict"):
 
     pdf_file = generate_pdf(user_info, prediction, bmi, risk_score)
     st.markdown(download_pdf(pdf_file), unsafe_allow_html=True)
+
