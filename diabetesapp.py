@@ -148,7 +148,7 @@ if st.button("🔍 Predict"):
     st.subheader("🔍 Visual Explanation (SHAP)")
     explainer = shap.Explainer(model, input_df)
     shap_values = explainer(input_df)
-    shap.initjs()
+    # shap.initjs()  # Removed because IPython not required for Streamlit SHAP rendering
     shap.plots.waterfall(shap_values[0], max_display=6, show=False)
     st.pyplot(bbox_inches='tight')
 
@@ -169,3 +169,4 @@ if st.button("🔍 Predict"):
 
     pdf_file = generate_pdf(user_info, prediction, bmi, risk_score)
     st.markdown(download_pdf(pdf_file), unsafe_allow_html=True)
+
