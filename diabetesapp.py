@@ -80,7 +80,7 @@ def download_pdf(file_path):
 
 # Streamlit UI
 st.set_page_config(page_title="Diabetes Prediction App", page_icon="🩺", layout="centered")
-st.title("🩺 Personalized Diabetes Prediction")
+st.title("Diabetes Prediction")
 
 user_name = st.text_input("👤 Enter your name:", value="")
 age = st.slider("Age", 1, 100, 30)
