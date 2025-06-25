@@ -28,7 +28,7 @@ def generate_pdf(data, prediction, bmi, risk_score):
 
     # Title
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(200, 10, txt="🩺 Diabetes Prediction Report", ln=1, align='C')
+    pdf.cell(200, 10, txt="Diabetes Prediction Report", ln=1, align='C')
     pdf.ln(5)
 
     # Basic info
@@ -41,7 +41,7 @@ def generate_pdf(data, prediction, bmi, risk_score):
     # Health metrics
     pdf.ln(5)
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, txt="📋 Health Metrics", ln=1)
+    pdf.cell(200, 10, txt="Health Metrics", ln=1)
     pdf.set_font("Arial", '', 12)
     pdf.cell(200, 10, txt=f"Glucose: {data['Glucose']}     Insulin: {data['Insulin']}", ln=1)
     pdf.cell(200, 10, txt=f"Blood Pressure: {data['Blood Pressure']}     Skin Thickness: {data['Skin Thickness']}", ln=1)
@@ -50,7 +50,7 @@ def generate_pdf(data, prediction, bmi, risk_score):
     # Derived indicators
     pdf.ln(5)
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, txt="📊 Derived Indicators", ln=1)
+    pdf.cell(200, 10, txt="Derived Indicators", ln=1)
     pdf.set_font("Arial", '', 12)
     pdf.cell(200, 10, txt=f"BMI: {bmi}", ln=1)
     pdf.cell(200, 10, txt=f"Total Risk Score: {risk_score}", ln=1)
@@ -58,7 +58,7 @@ def generate_pdf(data, prediction, bmi, risk_score):
     # Prediction result
     pdf.ln(5)
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, txt="🔍 Prediction Result", ln=1)
+    pdf.cell(200, 10, txt="Prediction Result", ln=1)
     pdf.set_font("Arial", '', 12)
     if prediction == 1:
         pdf.set_text_color(255, 0, 0)
@@ -72,7 +72,7 @@ def generate_pdf(data, prediction, bmi, risk_score):
     # Symptoms
     pdf.ln(5)
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(200, 10, txt="📝 Symptoms Checked", ln=1)
+    pdf.cell(200, 10, txt="Symptoms Checked", ln=1)
     pdf.set_font("Arial", '', 12)
     pdf.multi_cell(0, 10, txt=data['Symptoms Checked'])
 
@@ -202,4 +202,3 @@ if st.button("🔍 Predict"):
 
     pdf_file = generate_pdf(user_info, prediction, bmi, risk_score)
     st.markdown(download_pdf(pdf_file), unsafe_allow_html=True)
-
