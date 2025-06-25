@@ -151,7 +151,6 @@ if st.button("🔍 Predict"):
     shap_values = explainer.shap_values(input_df)
 
     try:
-        st.set_option('deprecation.showPyplotGlobalUse', False)
         shap.plots._waterfall.waterfall_legacy(
             shap.Explanation(values=shap_values[1][0],
                              base_values=explainer.expected_value[1],
