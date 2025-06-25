@@ -25,18 +25,58 @@ def calculate_risk_score(glucose, bmi, age, pregnancies):
 def generate_pdf(data, prediction, bmi, risk_score):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt="Diabetes Prediction Report", ln=1, align='C')
-    pdf.ln(10)
-    
-    for key, value in data.items():
-        pdf.cell(200, 10, txt=f"{key}: {value}", ln=1)
 
+    # Title
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(200, 10, txt="🩺 Diabetes Prediction Report", ln=1, align='C')
     pdf.ln(5)
+
+    # Basic info
+    pdf.set_font("Arial", '', 12)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(200, 10, txt=f"Name: {data['Name']}", ln=1)
+    pdf.cell(200, 10, txt=f"Age: {data['Age']}   Gender: {data['Gender']}", ln=1)
+    pdf.cell(200, 10, txt=f"Pregnancies: {data['Pregnancies']}   DPF: {data['DPF']}", ln=1)
+
+    # Health metrics
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(200, 10, txt="📋 Health Metrics", ln=1)
+    pdf.set_font("Arial", '', 12)
+    pdf.cell(200, 10, txt=f"Glucose: {data['Glucose']}     Insulin: {data['Insulin']}", ln=1)
+    pdf.cell(200, 10, txt=f"Blood Pressure: {data['Blood Pressure']}     Skin Thickness: {data['Skin Thickness']}", ln=1)
+    pdf.cell(200, 10, txt=f"Weight: {data['Weight (kg)']} kg     Height: {data['Height (cm)']} cm", ln=1)
+
+    # Derived indicators
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(200, 10, txt="📊 Derived Indicators", ln=1)
+    pdf.set_font("Arial", '', 12)
     pdf.cell(200, 10, txt=f"BMI: {bmi}", ln=1)
     pdf.cell(200, 10, txt=f"Total Risk Score: {risk_score}", ln=1)
-    pdf.cell(200, 10, txt=f"Prediction: {'Diabetic' if prediction == 1 else 'Non-Diabetic'}", ln=1)
 
+    # Prediction result
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(200, 10, txt="🔍 Prediction Result", ln=1)
+    pdf.set_font("Arial", '', 12)
+    if prediction == 1:
+        pdf.set_text_color(255, 0, 0)
+        result_text = "Diabetic"
+    else:
+        pdf.set_text_color(0, 128, 0)
+        result_text = "Non-Diabetic"
+    pdf.cell(200, 10, txt=f"Prediction: {result_text}", ln=1)
+    pdf.set_text_color(0, 0, 0)  # Reset
+
+    # Symptoms
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(200, 10, txt="📝 Symptoms Checked", ln=1)
+    pdf.set_font("Arial", '', 12)
+    pdf.multi_cell(0, 10, txt=data['Symptoms Checked'])
+
+    # Save file
     file_path = "diabetes_prediction_report.pdf"
     pdf.output(file_path)
     return file_path
@@ -162,5 +202,4 @@ if st.button("🔍 Predict"):
 
     pdf_file = generate_pdf(user_info, prediction, bmi, risk_score)
     st.markdown(download_pdf(pdf_file), unsafe_allow_html=True)
-
 
