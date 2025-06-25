@@ -58,8 +58,8 @@ gender = st.selectbox("Gender", ["Male", "Female"])
 pregnancies = st.slider("Pregnancies", min_value=0, max_value=20, value=1)
 glucose = st.slider("Glucose", min_value=50, max_value=200, value=110)
 skinthickness = st.slider("Skin Thickness (mm)", min_value=0, max_value=100, value=20)
-weight = st.slider("Weight (kg)", min_value=30.0, max_value=200.0, value=70.0)
-height = st.slider("Height (cm)", min_value=100.0, max_value=220.0, value=170.0)
+weight = st.number_input("Weight (kg)", min_value=30.0, max_value=200.0, step=0.1)
+height = st.number_input("Height (cm)", min_value=100.0, max_value=220.0, step=0.1)
 insulin = st.slider("Insulin", min_value=0.0, max_value=600.0, value=100.0)
 dpf = st.number_input("Diabetes Pedigree Function (DPF)", min_value=0.0, max_value=3.0, value=0.5)
 bloodpressure = st.slider("Blood Pressure", min_value=0.0, max_value=200.0, value=80.0)
@@ -144,20 +144,7 @@ if st.button("🔍 Predict"):
     else:
         st.success("✅ This result suggests a lower risk of diabetes.")
 
-    # SHAP explanation
-    st.subheader("🔍 Visual Explanation (SHAP)")
-
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(input_df)
-
-    try:
-        shap.plots._waterfall.waterfall_legacy(
-            shap.Explanation(values=shap_values[0], base_values=explainer.expected_value, data=input_df.iloc[0]),
-            max_display=6
-        )
-        st.pyplot(bbox_inches='tight')
-    except Exception as e:
-        st.warning(f"SHAP plot could not be rendered: {e}")
+            st.warning(f"SHAP plot could not be rendered: {e}")
 
     user_info = {
         "Name": user_name,
@@ -176,4 +163,5 @@ if st.button("🔍 Predict"):
 
     pdf_file = generate_pdf(user_info, prediction, bmi, risk_score)
     st.markdown(download_pdf(pdf_file), unsafe_allow_html=True)
+
 
