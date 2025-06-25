@@ -152,9 +152,7 @@ if st.button("🔍 Predict"):
 
     try:
         shap.plots._waterfall.waterfall_legacy(
-            shap.Explanation(values=shap_values[1][0],
-                             base_values=explainer.expected_value[1],
-                             data=input_df.iloc[0]),
+            shap.Explanation(values=shap_values[0], base_values=explainer.expected_value, data=input_df.iloc[0]),
             max_display=6
         )
         st.pyplot(bbox_inches='tight')
@@ -178,3 +176,4 @@ if st.button("🔍 Predict"):
 
     pdf_file = generate_pdf(user_info, prediction, bmi, risk_score)
     st.markdown(download_pdf(pdf_file), unsafe_allow_html=True)
+
