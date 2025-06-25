@@ -101,7 +101,7 @@ skinthickness = st.slider("Skin Thickness (mm)", min_value=0, max_value=100, val
 weight = st.number_input("Weight (kg)", min_value=30.0, max_value=200.0, step=0.1)
 height = st.number_input("Height (cm)", min_value=100.0, max_value=220.0, step=0.1)
 insulin = st.slider("Insulin", min_value=0.0, max_value=600.0, value=100.0)
-dpf = st.number_input("Diabetes Pedigree Function (DPF)", min_value=0.0, max_value=3.0, value=0.5)
+dpf = st.number_input("Diabetes Pedigree Function (DPF)", min_value=0.0, max_value=3.0, value=0.5, help="A score indicating the genetic likelihood of diabetes based on family history. Typical values range from 0.1 to 2.5.")
 bloodpressure = st.slider("Blood Pressure", min_value=0.0, max_value=200.0, value=80.0)
 
 # Optional symptoms
@@ -202,3 +202,4 @@ if st.button("🔍 Predict"):
 
     pdf_file = generate_pdf(user_info, prediction, bmi, risk_score)
     st.markdown(download_pdf(pdf_file), unsafe_allow_html=True)
+
